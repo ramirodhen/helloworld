@@ -69,7 +69,7 @@ pipeline{
                         unstash name:'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
-                        export PYTHONPATH=.exp
+                        export PYTHONPATH=.
                         pytest --junitxml=resultado-unit.xml test/unit
                         '''
                         stash name:'pruebas-unit', includes:'resultado-unit.xml'
