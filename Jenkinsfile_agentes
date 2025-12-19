@@ -85,14 +85,14 @@ pipeline{
 
         stage ('Limpieza')
         {
+            agent any
             steps {
-                post {
-                always {
+                
                 echo 'Limpiaeza de Workspace'
                 deleteDir()
-                        }   
+                         
                     }      
-                }    
+                  
         }
     }
 }
