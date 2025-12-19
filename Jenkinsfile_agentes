@@ -78,7 +78,7 @@ pipeline{
                 
                 stage('Service')
                 {
-                    agent {label 'agent2'
+                    agent {label 'agent2'}
                     steps {
                          //solicitud de informacion del profesor//
                         sh '''
@@ -139,7 +139,6 @@ pipeline{
                 echo 'Workspace limpio'
                     }      
                   
-            }
         }
     }
 }
