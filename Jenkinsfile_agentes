@@ -81,7 +81,7 @@ pipeline{
             junit 'resultado*.xml'
                 }
         }
-     }
+     
 
         stage ('Limpieza')
         {
@@ -94,5 +94,5 @@ pipeline{
                     }      
                 }    
         }
-
+    }
 }
