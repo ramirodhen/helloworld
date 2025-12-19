@@ -82,4 +82,11 @@ pipeline{
                 }
         }
      }
+
+    post {
+  always {
+    echo 'Limpiaeza de Workspace'
+    deleteDir()
+  }
+}
 }
