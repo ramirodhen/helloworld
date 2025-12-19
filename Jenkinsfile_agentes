@@ -1,0 +1,81 @@
+pipeline{
+    agent any
+
+    options {
+        skipDefaultChekout(true
+    )}
+    
+    stages {
+        
+        stage('Prueba echo')
+        {
+            steps {
+                //Realizar un echo//
+               sh 'echo Este es mi primer pipeline'
+                }
+        }
+        
+        stage('Get Code')
+        {
+            steps {
+                //Descargar códico desde mi repositorio//
+                git 'https://github.com/ramirodhen/helloworld.git'
+                //Verificación de descarga de código//
+                sh 'ls -la'
+                //Mostrar mi espacio de trabajo//
+                sh 'echo $WORKSPACE'
+                }
+        }
+        
+        stage('Build')
+        {
+            steps {
+                //Etapa de complilación simulada//
+                sh 'echo Nada que compilar'
+            }  
+        }
+        stage('Tests'){
+            parallel {
+                stage('Unit')
+                {
+                    agent {label 'agent1'}
+                    steps {
+                        //Pruebas unitarias con pytest//
+                        sh '''
+                        export PYTHONPATH=.
+                        pytest --junitxml=resultado-unit.xml test/unit
+                        '''
+                        stash name:'pruebas-unit', includes:'resultado-unit.xml'
+                    }
+                }
+                
+                stage('Service')
+                {
+                    agent {label 'agent2'}
+                    steps {
+                        //Levantamos Entorno de pruebas//
+                        sh '''
+                        set -e
+                        export FLASK_APP=app.api:api_application
+                        flask run &
+                        java -jar /opt/wiremock/wiremock-standalone-3.13.2.jar --port 9090 --root-dir "$WORKSPACE/test/wiremock" &
+                        sleep 5
+                        echo "fin sleep"
+                        # Ejecutamos 
+                        pytest --junitxml=resultado-service.xml test/rest
+                        '''
+                        stash name:'pruebas-service' , includes'resultado-service.xml'
+                         }
+                }
+            }
+        }
+        stage ('Resultado')
+        {
+            steps {
+                unstash name:'pruebas-unit'
+                unstash name:'pruebas-service'
+            junit 'resultado*.xml'
+                }
+        }
+     }
+}
