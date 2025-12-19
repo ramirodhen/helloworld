@@ -83,10 +83,16 @@ pipeline{
         }
      }
 
-    post {
-  always {
-    echo 'Limpiaeza de Workspace'
-    deleteDir()
-  }
-}
+        stage ('Limpieza')
+        {
+            steps {
+                post {
+                always {
+                echo 'Limpiaeza de Workspace'
+                deleteDir()
+                        }   
+                    }      
+                }    
+        }
+
 }
