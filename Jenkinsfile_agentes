@@ -42,7 +42,7 @@ pipeline{
                 {
                     agent {label 'agent1'}
                     steps {
-                        unstash:'codigo'
+                        unstash name:'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
                         export PYTHONPATH=.exp
@@ -56,7 +56,7 @@ pipeline{
                 {
                     agent {label 'agent2'}
                     steps {
-                        unstash:'codigo'
+                        unstash name:'codigo'
                         //Levantamos Entorno de pruebas//
                         sh '''
                         set -e
