@@ -10,6 +10,12 @@ pipeline{
         stage('Prueba echo')
         {
             steps {
+                //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
                 //Realizar un echo//
                sh 'echo Este es mi primer pipeline'
                 }
@@ -18,6 +24,12 @@ pipeline{
         stage('Get Code')
         {
             steps {
+                //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
                 //Descargar códico desde mi repositorio//
                 git 'https://github.com/ramirodhen/helloworld.git'
                 //Verificación de descarga de código//
@@ -48,6 +60,12 @@ pipeline{
                 {
                     agent {label 'agent1'}
                     steps {
+                        //solicitud de informacion del profesor//
+                    sh '''
+                    whoami
+                    hostname
+                    echo "WORKSPACE=$WORKSPACE"
+                    '''
                         unstash name:'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
@@ -60,9 +78,17 @@ pipeline{
                 
                 stage('Service')
                 {
-                    agent {label 'agent2'}
+                    agent {label 'agent2'
                     steps {
+                         //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''
+                        //Recibimos codigo en agente 2//
                         unstash name:'codigo'
+
                         //Levantamos Entorno de pruebas//
                         sh '''
                         set -e
@@ -82,6 +108,13 @@ pipeline{
         stage ('Resultado')
         {
             steps {
+                 //solicitud de informacion del profesor//
+                    sh '''
+                    whoami
+                    hostname
+                    echo "WORKSPACE=$WORKSPACE"
+                    '''
+
                 unstash name:'pruebas-unit'
                 unstash name:'pruebas-service'
             junit 'resultado*.xml'
@@ -94,6 +127,13 @@ pipeline{
             agent any
             steps {
                 
+                //solicitud de informacion del profesor//
+                sh '''
+                whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
+
                 echo 'Iniciando limpieza de Workspace'
                 deleteDir()
                 echo 'Workspace limpio'
