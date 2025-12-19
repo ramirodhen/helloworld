@@ -32,6 +32,12 @@ pipeline{
         stage('Build')
         {
             steps {
+                //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
                 //Etapa de complilación simulada//
                 sh 'echo Nada que compilar'
             }  
