@@ -24,6 +24,8 @@ pipeline{
                 sh 'ls -la'
                 //Mostrar mi espacio de trabajo//
                 sh 'echo $WORKSPACE'
+                //Stasheamos el codigo para poder recuperarlo en los diferentes agentes//
+                stash name:'codigo', includes:'**'
                 }
         }
         
@@ -40,9 +42,10 @@ pipeline{
                 {
                     agent {label 'agent1'}
                     steps {
+                        unstash:'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
-                        export PYTHONPATH=.
+                        export PYTHONPATH=.exp
                         pytest --junitxml=resultado-unit.xml test/unit
                         '''
                         stash name:'pruebas-unit', includes:'resultado-unit.xml'
@@ -53,6 +56,7 @@ pipeline{
                 {
                     agent {label 'agent2'}
                     steps {
+                        unstash:'codigo'
                         //Levantamos Entorno de pruebas//
                         sh '''
                         set -e
