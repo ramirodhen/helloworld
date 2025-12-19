@@ -88,9 +88,9 @@ pipeline{
             agent any
             steps {
                 
-                echo 'Limpiaeza de Workspace'
+                echo 'Iniciando limpieza de Workspace'
                 deleteDir()
-                         
+                echo 'Workspace limpio'
                     }      
                   
         }
