@@ -2,8 +2,8 @@ pipeline{
     agent any
 
     options {
-        skipDefaultChekout(true
-    )}
+        skipDefaultChekout(true)
+        }
     
     stages {
         
@@ -64,7 +64,7 @@ pipeline{
                         # Ejecutamos 
                         pytest --junitxml=resultado-service.xml test/rest
                         '''
-                        stash name:'pruebas-service' , includes'resultado-service.xml'
+                        stash name:'pruebas-service', includes:'resultado-service.xml'
                          }
                 }
             }
