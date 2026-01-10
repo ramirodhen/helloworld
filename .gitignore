@@ -3,3 +3,14 @@ __pycache__
 .pytest_cache
 *.swp
 *.swp
+# Coverage
+.coverage
+coverage*.xml
+htmlcov/
+
+# JMeter
+jmeter.log
+
+# Python
+__pycache__/
+*.pyc
