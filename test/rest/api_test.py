@@ -56,8 +56,13 @@ class TestApi(unittest.TestCase):
         )
 
     def test_divide_by_zero_returns_406(self):
-        r = requests.get(f"{BASE_URL}/calc/divide/10/0")
-        assert r.status_code == 406
+    url = f"{BASE_URL}/calc/divide/10/0"
+    response = urlopen(url, timeout=DEFAULT_TIMEOUT)
+    self.assertEqual(
+        response.status,
+        http.client.NOT_ACCEPTABLE,
+        f"Error en la petición API a {url}"
+    )
 
 '''
     def test_api_sqrt(self):
