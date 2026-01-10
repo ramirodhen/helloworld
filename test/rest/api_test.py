@@ -55,12 +55,15 @@ class TestApi(unittest.TestCase):
             response.read().decode(), "4.0", "ERROR ADD"
         )
 
+    from urllib.error import HTTPError
+
     def test_divide_by_zero_returns_406(self):
         url = f"{BASE_URL}/calc/divide/10/0"
-        response = urlopen(url, timeout=DEFAULT_TIMEOUT)
-        self.assertEqual(
-            response.status, http.client.NOT_ACCEPTABLE, f"Error en la petición API a {url}"
-        )
+        try:
+            response = urlopen(url, timeout=DEFAULT_TIMEOUT)
+        self.fail("Debería haber lanzado un error 406")
+        except HTTPError as e:
+        assert e.code == 406
 
 '''
     def test_api_sqrt(self):
