@@ -55,10 +55,9 @@ class TestApi(unittest.TestCase):
             response.read().decode(), "4.0", "ERROR ADD"
         )
 
-	def test_divide_by_zero_returns_406():
-    	r = requests.get(f"{BASE_URL}/calc/divide/10/0")
-    	assert r.status_code == 406
-
+    def test_divide_by_zero_returns_406():
+        r = requests.get(f"{BASE_URL}/calc/divide/10/0")
+        assert r.status_code == 406
 
 '''
     def test_api_sqrt(self):
