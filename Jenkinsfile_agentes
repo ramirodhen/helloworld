@@ -41,20 +41,7 @@ pipeline{
                 stash name:'codigo', includes:'**'
                 }
         }
-        
-        stage('Build')
-        {
-            steps {
-                //solicitud de informacion del profesor//
-                sh '''
-                 whoami
-                hostname
-                echo "WORKSPACE=$WORKSPACE"
-                '''
-                //Etapa de complilación simulada//
-                sh 'echo Nada que compilar'
-            }  
-        }
+
         stage('Tests'){
             parallel {
                 stage('Unit')
@@ -73,7 +60,7 @@ pipeline{
                         export PYTHONPATH=.
                         pytest --junitxml=resultado-unit.xml test/unit
                         '''
-                        stash name:'pruebas-unit', includes:'resultado-unit.xml'
+                        junit 'resultado-unit.xml'
                     }
                 }
                 
@@ -101,28 +88,12 @@ pipeline{
                         # Ejecutamos 
                         pytest --junitxml=resultado-service.xml test/rest
                         '''
-                        stash name:'pruebas-service', includes:'resultado-service.xml'
+                        junit 'resultado-service.xml'
                          }
                 }
             }
         }
-        stage ('Resultado')
-        {
-            steps {
-                 //solicitud de informacion del profesor//
-                    sh '''
-                    whoami
-                    hostname
-                    echo "WORKSPACE=$WORKSPACE"
-                    '''
-
-                unstash name:'pruebas-unit'
-                unstash name:'pruebas-service'
-            junit 'resultado*.xml'
-                }
-        }
-     
-
+ 
         stage ('Limpieza')
         {
             agent any
