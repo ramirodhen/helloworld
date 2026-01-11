@@ -50,7 +50,7 @@ pipeline{
 
         // Ejecutamos flake8 sin romper el pipeline
             sh '''
-            flake8 --format=pylint --exit-zero app/calc.py > flake8.out
+            flake8 --format=pylint --exit-zero app > flake8.out
             '''
 
         // Publicamos resultados y controlamos estado SIN parar el pipeline
