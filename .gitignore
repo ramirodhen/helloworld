@@ -14,3 +14,6 @@ jmeter.log
 # Python
 __pycache__/
 *.pyc
+
+# Flake8
+flake8.out
