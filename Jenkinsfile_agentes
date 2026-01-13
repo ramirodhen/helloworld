@@ -159,17 +159,17 @@ stage('Security') {
             unstash 'coverage-report'
 
             recordCoverage(
-                tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
-                qualityGates: [
-                    // Líneas
-                    [metric: 'LINE', threshold: 85.0, unstable: true],
-                    [metric: 'LINE', threshold: 95.0],
+  tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
+  qualityGates: [
+    // Líneas
+    [threshold: 85.0, metric: 'LINE',   baseline: 'PROJECT', criticality: 'FAILURE'],
+    [threshold: 95.0, metric: 'LINE',   baseline: 'PROJECT', criticality: 'UNSTABLE'],
 
-                    // Ramas
-                    [metric: 'BRANCH', threshold: 80.0, unstable: true],
-                    [metric: 'BRANCH', threshold: 90.0]
-                ]
-            )
+    // Ramas
+    [threshold: 80.0, metric: 'BRANCH', baseline: 'PROJECT', criticality: 'FAILURE'],
+    [threshold: 90.0, metric: 'BRANCH', baseline: 'PROJECT', criticality: 'UNSTABLE'],
+  ]
+)
         }
     }
 }
