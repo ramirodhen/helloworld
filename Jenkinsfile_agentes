@@ -104,10 +104,16 @@ stage('Security') {
                         unstash name:'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
+                        set -e
                         export PYTHONPATH=.
-                        pytest --junitxml=resultado-unit.xml test/unit
+                        pytest test/unit \
+                        --junitxml=resultado-unit.xml \
+                        --cov=app --cov-branch \
+                        --cov-report=xml:coverage.xml
                         '''
                         junit 'resultado-unit.xml'
+                         //Stash del reporte de cobertura//
+                        stash name:'coverage-report', includes:'coverage.xml'
                         }
                     }
                 }
@@ -144,6 +150,29 @@ stage('Security') {
                 }
             }
         }
+
+        stage('Cobertura') {
+    agent any
+    steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+
+            unstash 'coverage-report'
+
+            recordCoverage(
+                tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
+                qualityGates: [
+                    // Líneas
+                    [metric: 'LINE', threshold: 85.0, unstable: true],
+                    [metric: 'LINE', threshold: 95.0],
+
+                    // Ramas
+                    [metric: 'BRANCH', threshold: 80.0, unstable: true],
+                    [metric: 'BRANCH', threshold: 90.0]
+                ]
+            )
+        }
+    }
+}
  
         stage ('Limpieza')
         {
