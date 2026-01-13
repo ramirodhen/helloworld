@@ -151,23 +151,25 @@ stage('Security') {
             }
         }
 
-stage('Cobertura') {
+sstage('Cobertura') {
   agent any
   steps {
     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
       unstash 'coverage-report'
 
       script {
-        if (currentBuild.result == 'FAILURE') {
+        echo "Resultado antes de coverage: ${currentBuild.currentResult}"
+        if (currentBuild.currentResult == 'FAILURE') {
           currentBuild.result = 'UNSTABLE'
+          echo "Forzando a UNSTABLE para que recordCoverage se ejecute"
         }
       }
 
       recordCoverage(
         tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
         qualityGates: [
-          [metric: 'LINE', integerThreshold: 85, criticality: 'FAILURE'],
-          [metric: 'LINE', integerThreshold: 95, criticality: 'UNSTABLE'],
+          [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
+          [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
           [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
           [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
         ]
