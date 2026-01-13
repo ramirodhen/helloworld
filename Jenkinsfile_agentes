@@ -74,7 +74,7 @@ pipeline{
 
         // Ejecutamos bandit sin romper el pipeline
             sh '''
-           bandit exit-zero -r . -f custom -o bandit.out --msg-template "{path}:{line}: [{test_id}] {msg}"
+            bandit -r app -f custom -o bandit.out --msg-template "{path}:{line}: [{test_id}] {msg}" || true
             '''
 
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
