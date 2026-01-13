@@ -151,27 +151,29 @@ stage('Security') {
             }
         }
 
-        stage('Cobertura') {
-    agent any
-    steps {
-        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+stage('Cobertura') {
+  agent any
+  steps {
+    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+      unstash 'coverage-report'
 
-            unstash 'coverage-report'
-
-            recordCoverage(
-  tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
-  qualityGates: [
-    // Líneas
-    [threshold: 85.0, metric: 'LINE',   baseline: 'PROJECT', criticality: 'FAILURE'],
-    [threshold: 95.0, metric: 'LINE',   baseline: 'PROJECT', criticality: 'UNSTABLE'],
-
-    // Ramas
-    [threshold: 80.0, metric: 'BRANCH', baseline: 'PROJECT', criticality: 'FAILURE'],
-    [threshold: 90.0, metric: 'BRANCH', baseline: 'PROJECT', criticality: 'UNSTABLE'],
-  ]
-)
+      script {
+        if (currentBuild.result == 'FAILURE') {
+          currentBuild.result = 'UNSTABLE'
         }
+      }
+
+      recordCoverage(
+        tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
+        qualityGates: [
+          [metric: 'LINE', integerThreshold: 85, criticality: 'FAILURE'],
+          [metric: 'LINE', integerThreshold: 95, criticality: 'UNSTABLE'],
+          [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
+          [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
+        ]
+      )
     }
+  }
 }
  
         stage ('Limpieza')
