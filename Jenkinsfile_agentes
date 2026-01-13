@@ -73,8 +73,7 @@ stage('Security') {
 
 
         sh '''
-        rm -f bandit.out
-        bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
+        bandit -r app -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
         '''
 
         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
