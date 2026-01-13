@@ -1,0 +1,167 @@
+pipeline{
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        }
+    
+    stages {
+        
+        stage('Prueba echo')
+        {
+            steps {
+                //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
+                //Realizar un echo//
+               sh 'echo Este es mi primer pipeline'
+                }
+        }
+        
+        stage('Get Code')
+        {
+            steps {
+                //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
+                //Descargar códico desde mi repositorio//
+                git branch: 'develop',
+        	url: 'https://github.com/ramirodhen/helloworld.git'
+                //Verificación de descarga de código//
+                sh 'ls -la'
+                //Mostrar mi espacio de trabajo//
+                sh 'echo $WORKSPACE'
+                //Stasheamos el codigo para poder recuperarlo en los diferentes agentes//
+                stash name:'codigo', includes:'**'
+                }
+        }
+
+        stage('Static') {
+        agent any
+        steps {
+        // Recuperamos el código
+            unstash 'codigo'
+
+        // Ejecutamos flake8 sin romper el pipeline
+            sh '''
+            flake8 --format=pylint --exit-zero app > flake8.out
+            '''
+
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            script {
+                recordIssues(
+                    tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
+                    qualityGates: [
+                        [threshold: 8, type: 'TOTAL', unstable: true],   
+                        [threshold: 10, type: 'TOTAL', unstable: false]   
+                    ]
+                )
+            }
+        }
+    }
+}
+stage('Security') {
+    agent any
+    steps {
+        unstash 'codigo'
+
+
+        sh '''
+        bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
+        '''
+
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            script {
+                def issues = scanForIssues(tool: pyLint(pattern: 'bandit.out'))
+                publishIssues issues: [issues], qualityGates: [
+                 [threshold: 2, type: 'TOTAL', unstable: true],
+                  [threshold: 4, type: 'TOTAL', unstable: false]
+                ]
+            }
+        }
+    }
+}
+             
+        stage('Tests'){
+            parallel {
+                stage('Unit')
+                {
+                    agent {label 'agent1'}
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        //solicitud de informacion del profesor//
+                    sh '''
+                    whoami
+                    hostname
+                    echo "WORKSPACE=$WORKSPACE"
+                    '''
+                        unstash name:'codigo'
+                        //Pruebas unitarias con pytest//
+                        sh '''
+                        export PYTHONPATH=.
+                        pytest --junitxml=resultado-unit.xml test/unit
+                        '''
+                        junit 'resultado-unit.xml'
+                        }
+                    }
+                }
+                
+                stage('Service')
+                {
+                    agent {label 'agent2'}
+                    steps {
+                         //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        //Recibimos codigo en agente 2//
+                        unstash name:'codigo'
+
+                        //Levantamos Entorno de pruebas//
+                        sh '''
+                        set -e
+                        export FLASK_APP=app.api:api_application
+                        flask run &
+                        java -jar /opt/wiremock/wiremock-standalone-3.13.2.jar --port 9090 --root-dir "$WORKSPACE/test/wiremock" &
+                        sleep 5
+                        echo "fin sleep"
+                        # Ejecutamos 
+                        pytest --junitxml=resultado-service.xml test/rest
+                        '''
+                        junit 'resultado-service.xml'
+
+                        }
+                    }
+                }
+            }
+        }
+ 
+        stage ('Limpieza')
+        {
+            agent any
+            steps {
+                
+                //solicitud de informacion del profesor//
+                sh '''
+                whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
+
+                echo 'Iniciando limpieza de Workspace'
+                deleteDir()
+                echo 'Workspace limpio'
+                    }      
+                  
+        }
+    }
+}
