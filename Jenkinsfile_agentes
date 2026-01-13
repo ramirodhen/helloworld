@@ -53,7 +53,6 @@ pipeline{
             flake8 --format=pylint --exit-zero app > flake8.out
             '''
 
-        // Publicamos resultados y controlamos estado SIN parar el pipeline
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
             script {
                 recordIssues(
@@ -67,7 +66,31 @@ pipeline{
         }
     }
 }
+        stage('Security') {
+        agent any
+        steps {
+        // Recuperamos el código
+            unstash 'codigo'
 
+        // Ejecutamos bandit sin romper el pipeline
+            sh '''
+           bandit -r app -f custom --msg-template "{path}:{line}: [{test_id}] {msg}" --exit-zero > bandit.out
+            '''
+
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            script {
+                recordIssues(
+                    tools: [pylint(name: 'Bandit', pattern: 'bandit.out')],
+                    qualityGates: [
+                        [threshold: 2, type: 'TOTAL', unstable: true],   
+                        [threshold: 4, type: 'TOTAL', unstable: false]   
+                    ]
+                )
+            }
+        }
+    }
+}
+             
         stage('Tests'){
             parallel {
                 stage('Unit')
