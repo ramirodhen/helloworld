@@ -72,7 +72,7 @@ stage('Security') {
         unstash 'codigo'
 
         sh '''
-        bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out
+        bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
         '''
 
         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
