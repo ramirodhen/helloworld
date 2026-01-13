@@ -154,22 +154,20 @@ stage('Security') {
 stage('Cobertura') {
   agent any
   steps {
-    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+    // Requisito: pase lo que pase, el pipeline continúa.
+    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+
       unstash 'coverage-report'
 
-      script {
-        echo "Resultado antes de coverage: ${currentBuild.currentResult}"
-        if (currentBuild.currentResult == 'FAILURE') {
-          currentBuild.result = 'UNSTABLE'
-          echo "Forzando a UNSTABLE para que recordCoverage se ejecute"
-        }
-      }
-
       recordCoverage(
+        enabledForFailure: true,   // <- CLAVE para que NO se salte si el build va en FAILURE
         tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
         qualityGates: [
+          // LINE: <85 = FAILURE, 85-95 = UNSTABLE, >95 OK
           [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
           [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
+
+          // BRANCH: <80 = FAILURE, 80-90 = UNSTABLE, >90 OK
           [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
           [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
         ]
