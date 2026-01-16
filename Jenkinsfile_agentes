@@ -165,7 +165,7 @@ stage('Cobertura') {
 
       recordCoverage(
         enabledForFailure: true,   // <- CLAVE para que NO se salte si el build va en FAILURE
-        tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']],
+        tools: [[parser: 'COBERTURA', pattern: 'coverage*.xml']],
         qualityGates: [
           // LINE: <85 = FAILURE, 85-95 = UNSTABLE, >95 OK
           [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
