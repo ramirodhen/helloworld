@@ -181,7 +181,14 @@ stage('Cobertura') {
 
 stage('Performance') {
   steps {
-    sh '/opt/jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl'
+    sh 
+    '''
+    set -e
+    export FLASK_APP=app.api:api_application
+    flask run &
+    sleep 4
+    /opt/jmeter/bin/jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl
+    '''
     perfReport sourceDataFiles: 'flask.jtl'
   }
 }
