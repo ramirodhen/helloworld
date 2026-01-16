@@ -109,7 +109,7 @@ stage('Security') {
                         python3 -m pytest test/unit \
                         --junitxml=resultado-unit.xml \
                         --cov=app \
-                        --cov=branch \
+                        --cov-branch \
                         --cov-config=.coveragerc \
                         --cov-report=xml:coverage-unit.xml
                         '''
