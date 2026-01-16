@@ -31,7 +31,7 @@ pipeline{
                 echo "WORKSPACE=$WORKSPACE"
                 '''
                 //Descargar códico desde mi repositorio//
-                git branch: 'develop',
+                git branch: 'master',
         	url: 'https://github.com/ramirodhen/helloworld.git'
                 //Verificación de descarga de código//
                 sh 'ls -la'
