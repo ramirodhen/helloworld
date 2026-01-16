@@ -109,7 +109,7 @@ stage('Security') {
                         pytest test/unit \
                         --junitxml=resultado-unit.xml \
                         --cov=app --cov-branch \
-                        --cov-omit=app/api.py,app/__init__.py \
+                        --cov-omit=app/api.py \
                         --cov-report=xml:coverage-unit.xml
                         '''
                         junit 'resultado-unit.xml'
