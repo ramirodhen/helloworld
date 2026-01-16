@@ -103,15 +103,8 @@ stage('Security') {
                     '''
                         unstash 'codigo'
                         //Pruebas unitarias con pytest//
-                        sh '''
-                        set -e
-                        export PYTHONPATH=.
-                        pytest test/unit \
-                        --junitxml=resultado-unit.xml \
-                        --cov=app --cov-branch \
-                        --cov-omit=app/api.py \
-                        --cov-report=xml:coverage-unit.xml
-                        '''
+                        
+                        sh '''python3 -m pytest test/unit --junitxml=resultado-unit.xml --cov=app --cov-branch --cov-omit=app/api.py --cov-report=xml:coverage-unit.xml'''
                         junit 'resultado-unit.xml'
                          //Stash del reporte de cobertura//
                         stash name: 'coverage-unit-report', includes:'coverage-unit.xml'
