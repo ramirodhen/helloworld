@@ -158,6 +158,7 @@ stage('Cobertura') {
     // Requisito: pase lo que pase, el pipeline continúa.
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 
+        unstash 'codigo'
         unstash 'coverage-unit-report'
 
       recordCoverage(

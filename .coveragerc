@@ -1,5 +1,6 @@
 [run]
 source = app
+relative_files = True
 omit =
     app/api.py
-    */__init__.pyx
+    */__init__.py
