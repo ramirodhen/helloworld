@@ -101,7 +101,7 @@ stage('Security') {
                     hostname
                     echo "WORKSPACE=$WORKSPACE"
                     '''
-                        unstash:'codigo'
+                        unstash 'codigo'
                         //Pruebas unitarias con pytest//
                         sh '''
                         set -e
@@ -113,7 +113,7 @@ stage('Security') {
                         '''
                         junit 'resultado-unit.xml'
                          //Stash del reporte de cobertura//
-                        stash name:'coverage-report', includes:'coverage.xml'
+                        stash name: 'coverage-report', includes:'coverage.xml'
                         }
                     }
                 }
@@ -130,7 +130,7 @@ stage('Security') {
                         '''
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         //Recibimos codigo en agente 2//
-                        unstash:'codigo'
+                        unstash 'codigo'
 
                         //Levantamos Entorno de pruebas//
                         sh '''
