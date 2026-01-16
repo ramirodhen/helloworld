@@ -23,7 +23,7 @@ pipeline{
         stage('fase1_1_test_estaticos_seguridad') {
             parallel {
         stage('Static') {
-        agent label 'agent1'
+        agent {label 'agent1'}
         steps {
             unstash 'codigo'
             sh '''
@@ -43,7 +43,7 @@ pipeline{
         }
         }
         stage('Security') {
-            agent label 'agent2'
+            agent {label 'agent2'}
             steps {
                 unstash 'codigo'
                 sh '''
