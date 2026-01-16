@@ -15,8 +15,8 @@ pipeline{
                 echo "WORKSPACE=$WORKSPACE"
                 '''
                 //Descargar códico desde mi repositorio//
-                git branch: 'feature_fix_coverage',
-        	    url: 'https://github.com/ramirodhen/helloworld.git'
+        	    git url: 'https://github.com/ramirodhen/helloworld.git'
+                    branch 'feature_fix_coverage'
                 //Verificación de descarga de código//
                 //Mostrar mi espacio de trabajo//
                 sh 'echo $WORKSPACE'
