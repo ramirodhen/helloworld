@@ -181,8 +181,7 @@ stage('Cobertura') {
 
 stage('Performance') {
   steps {
-    sh 
-    '''
+    sh '''
     set -e
     export FLASK_APP=app.api:api_application
     flask run &
