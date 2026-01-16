@@ -178,6 +178,13 @@ stage('Cobertura') {
     }
   }
 }
+
+stage('Performance') {
+  steps {
+    sh 'jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl'
+    perfReport sourceDataFiles: 'flask.jtl'
+  }
+}
  
         stage ('Limpieza')
         {
