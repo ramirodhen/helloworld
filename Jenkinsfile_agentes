@@ -20,8 +20,10 @@ pipeline{
                 stash name:'codigo', includes:'**'
                 }
         }
+        stage('fase1_1_test_estaticos_seguridad') {
+            parallel {
         stage('Static') {
-        agent any
+        agent label 'agent1'
         steps {
             unstash 'codigo'
             sh '''
@@ -41,7 +43,7 @@ pipeline{
         }
         }
         stage('Security') {
-            agent any
+            agent label 'agent2'
             steps {
                 unstash 'codigo'
                 sh '''
@@ -57,8 +59,10 @@ pipeline{
                     }
                 }
             }
-        }          
-        stage('Tests'){
+        } 
+        }
+        }         
+        stage('Fase 2 Test Unitarios y de Servicio') {
             parallel {
                 stage('Unit')
                 {
@@ -104,39 +108,43 @@ pipeline{
                 }
             }
         }
-        stage('Cobertura') {
-        agent any
-            steps {           
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    unstash 'codigo'
-                    unstash 'coverage-unit-report'
-                recordCoverage(
-                    enabledForFailure: true,
-                    tools: [[parser: 'COBERTURA', pattern: 'coverage-unit.xml']],
-                    qualityGates: [
-                    [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
-                    [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
-                    [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
-                    [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
-                    ]
-                )
+        stage('Fase 3 Calidad de Codigo') {
+            parallel {
+                stage('Cobertura') {
+                agent {label 'principal'}
+                    steps {           
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            unstash 'codigo'
+                            unstash 'coverage-unit-report'
+                        recordCoverage(
+                            enabledForFailure: true,
+                            tools: [[parser: 'COBERTURA', pattern: 'coverage-unit.xml']],
+                            qualityGates: [
+                            [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
+                            [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
+                            [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
+                            [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
+                            ]
+                        )
+                        }
+                    }
+                }
+                stage('Performance') {
+                    agent {label 'agent1'}
+                    steps {
+                        sh '''
+                        set -e
+                        export FLASK_APP=app.api:api_application
+                        flask run &
+                        sleep 4
+                        /opt/jmeter/bin/jmeter -n -t test/jmeter/suma-resta.jmx -f -l flask.jtl
+                        '''
+                        perfReport sourceDataFiles: 'flask.jtl'
+                    }
                 }
             }
-        }
+        }   
 
-        stage('Performance') {
-            steps {
-                sh '''
-                set -e
-                export FLASK_APP=app.api:api_application
-                flask run &
-                sleep 4
-                /opt/jmeter/bin/jmeter -n -t test/jmeter/suma-resta.jmx -f -l flask.jtl
-                '''
-                perfReport sourceDataFiles: 'flask.jtl'
-            }
-        }
- 
         stage('Limpieza') {
         parallel {
             stage('Clean principal') {
