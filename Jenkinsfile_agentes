@@ -20,22 +20,28 @@ pipeline{
                 stash name:'codigo', includes:'**'
                 }
         }
-        stage('fase1_1_test_estaticos_seguridad') {
+        stage('Fase 1 Test Estatico y de Seguridad') {
             parallel {
         stage('Static') {
         agent {label 'agent1'}
         steps {
-            unstash 'codigo'
-            sh '''
-            flake8 --format=pylint --exit-zero app > flake8.out
-            '''
-            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-            script {
-                recordIssues(
-                    tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
-                    qualityGates: [
-                        [threshold: 8, type: 'TOTAL', unstable: true],   
-                        [threshold: 10, type: 'TOTAL', unstable: false]   
+               //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''
+                unstash 'codigo'
+                sh '''
+                flake8 --format=pylint --exit-zero app > flake8.out
+                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                script {
+                    recordIssues(
+                        tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
+                        qualityGates: [
+                            [threshold: 8, type: 'TOTAL', unstable: true],   
+                            [threshold: 10, type: 'TOTAL', unstable: false]   
                     ]
                 )
             }
@@ -45,6 +51,12 @@ pipeline{
         stage('Security') {
             agent {label 'agent2'}
             steps {
+               //solicitud de informacion del profesor//
+                sh '''
+                 whoami
+                hostname
+                echo "WORKSPACE=$WORKSPACE"
+                '''                
                 unstash 'codigo'
                 sh '''
                 bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
@@ -68,6 +80,12 @@ pipeline{
                 {
                     agent {label 'agent1'}
                     steps {
+                        //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         unstash 'codigo'                      
                         sh '''
@@ -90,6 +108,12 @@ pipeline{
                 {
                     agent {label 'agent2'}
                     steps {
+                       //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         unstash 'codigo'
                         sh '''
@@ -112,7 +136,13 @@ pipeline{
             parallel {
                 stage('Cobertura') {
                 agent {label 'principal'}
-                    steps {           
+                    steps {   
+                        //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''        
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             unstash 'codigo'
                             unstash 'coverage-unit-report'
@@ -132,6 +162,12 @@ pipeline{
                 stage('Performance') {
                     agent {label 'agent1'}
                     steps {
+                         //solicitud de informacion del profesor//
+                        sh '''
+                        whoami
+                        hostname
+                        echo "WORKSPACE=$WORKSPACE"
+                        '''
                         sh '''
                         set -e
                         export FLASK_APP=app.api:api_application
