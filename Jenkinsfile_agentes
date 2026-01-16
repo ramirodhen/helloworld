@@ -14,13 +14,17 @@ pipeline{
                 hostname
                 echo "WORKSPACE=$WORKSPACE"
                 '''
-                //Descargar códico desde mi repositorio//
-        	    git url: 'https://github.com/ramirodhen/helloworld.git'
-                    branch 'feature_fix_coverage'
-                    branch 'master'
-                //Verificación de descarga de código//
-                //Mostrar mi espacio de trabajo//
-                sh 'echo $WORKSPACE'
+               // checkout explícito de la rama
+    git url: 'https://github.com/ramirodhen/helloworld.git',
+        branch: 'feature_fix_coverage'
+
+    // prueba visible en el log de que estás en ESA rama y en qué commit
+    sh '''
+      git rev-parse --abbrev-ref HEAD
+      git log -1 --oneline
+      ls -la
+      echo "WORKSPACE=$WORKSPACE"
+    '''
                 stash name:'codigo', includes:'**'
                 }
         }
