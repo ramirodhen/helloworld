@@ -3,24 +3,8 @@ pipeline{
 
     options {
         skipDefaultCheckout(true)
-        }
-    
-    stages {
-        
-        stage('Prueba echo')
-        {
-            steps {
-                //solicitud de informacion del profesor//
-                sh '''
-                 whoami
-                hostname
-                echo "WORKSPACE=$WORKSPACE"
-                '''
-                //Realizar un echo//
-               sh 'echo Este es mi primer pipeline'
-                }
-        }
-        
+        }  
+    stages {       
         stage('Get Code')
         {
             steps {
@@ -32,27 +16,21 @@ pipeline{
                 '''
                 //Descargar códico desde mi repositorio//
                 git branch: 'master',
-        	url: 'https://github.com/ramirodhen/helloworld.git'
+        	    url: 'https://github.com/ramirodhen/helloworld.git'
                 //Verificación de descarga de código//
                 sh 'ls -la'
                 //Mostrar mi espacio de trabajo//
                 sh 'echo $WORKSPACE'
-                //Stasheamos el codigo para poder recuperarlo en los diferentes agentes//
                 stash name:'codigo', includes:'**'
                 }
         }
-
         stage('Static') {
         agent any
         steps {
-        // Recuperamos el código
             unstash 'codigo'
-
-        // Ejecutamos flake8 sin romper el pipeline
             sh '''
             flake8 --format=pylint --exit-zero app > flake8.out
             '''
-
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
             script {
                 recordIssues(
@@ -66,28 +44,24 @@ pipeline{
             }
         }
         }
-stage('Security') {
-    agent any
-    steps {
-        unstash 'codigo'
-
-
-        sh '''
-        bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
-        '''
-
-        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-            script {
-                def issues = scanForIssues(tool: pyLint(pattern: 'bandit.out'))
-                publishIssues issues: [issues], qualityGates: [
-                [threshold: 2, type: 'TOTAL', unstable: true],
-                [threshold: 4, type: 'TOTAL', unstable: false]
-                ]
+        stage('Security') {
+            agent any
+            steps {
+                unstash 'codigo'
+                sh '''
+                bandit -r . -f custom --msg-template '{relpath}:{line}: [{test_id}] {msg}' > bandit.out || true
+                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        def issues = scanForIssues(tool: pyLint(pattern: 'bandit.out'))
+                        publishIssues issues: [issues], qualityGates: [
+                        [threshold: 2, type: 'TOTAL', unstable: true],
+                        [threshold: 4, type: 'TOTAL', unstable: false]
+                        ]
+                    }
+                }
             }
-        }
-    }
-}
-             
+        }          
         stage('Tests'){
             parallel {
                 stage('Unit')
@@ -95,14 +69,7 @@ stage('Security') {
                     agent {label 'agent1'}
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        //solicitud de informacion del profesor//
-                    sh '''
-                    whoami
-                    hostname
-                    echo "WORKSPACE=$WORKSPACE"
-                    '''
-                        unstash 'codigo'
-                        //Pruebas unitarias con pytest//
+                        unstash 'codigo'                      
                         sh '''
                         set -e
                         export PYTHONPATH=.
@@ -114,27 +81,17 @@ stage('Security') {
                         --cov-report=xml:coverage-unit.xml
                         '''
                         junit 'resultado-unit.xml'
-                         //Stash del reporte de cobertura//
+                      
                         stash name: 'coverage-unit-report', includes:'coverage-unit.xml'
                         }
                     }
-                }
-                
+                }               
                 stage('Service')
                 {
                     agent {label 'agent2'}
                     steps {
-                         //solicitud de informacion del profesor//
-                        sh '''
-                        whoami
-                        hostname
-                        echo "WORKSPACE=$WORKSPACE"
-                        '''
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        //Recibimos codigo en agente 2//
                         unstash 'codigo'
-
-                        //Levantamos Entorno de pruebas//
                         sh '''
                         set -e
                         export FLASK_APP=app.api:api_application
@@ -146,69 +103,68 @@ stage('Security') {
                         pytest --junitxml=resultado-service.xml test/rest
                         '''
                         junit 'resultado-service.xml'
-
                         }
                     }
                 }
             }
         }
+        stage('Cobertura') {
+        agent any
+            steps {           
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    unstash 'codigo'
+                    unstash 'coverage-unit-report'
+                recordCoverage(
+                    enabledForFailure: true,
+                    tools: [[parser: 'COBERTURA', pattern: 'coverage-unit.xml']],
+                    qualityGates: [
+                    [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
+                    [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
+                    [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
+                    [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
+                    ]
+                )
+                }
+            }
+        }
 
-stage('Cobertura') {
-  agent any
-  steps {
-    // Requisito: pase lo que pase, el pipeline continúa.
-    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-
-        unstash 'codigo'
-        unstash 'coverage-unit-report'
-
-      recordCoverage(
-        enabledForFailure: true,   // <- CLAVE para que NO se salte si el build va en FAILURE
-        tools: [[parser: 'COBERTURA', pattern: 'coverage-unit.xml']],
-        qualityGates: [
-          // LINE: <85 = FAILURE, 85-95 = UNSTABLE, >95 OK
-          [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
-          [metric: 'LINE',   integerThreshold: 95, criticality: 'UNSTABLE'],
-
-          // BRANCH: <80 = FAILURE, 80-90 = UNSTABLE, >90 OK
-          [metric: 'BRANCH', integerThreshold: 80, criticality: 'FAILURE'],
-          [metric: 'BRANCH', integerThreshold: 90, criticality: 'UNSTABLE']
-        ]
-      )
-    }
-  }
-}
-
-stage('Performance') {
-  steps {
-    sh '''
-    set -e
-    export FLASK_APP=app.api:api_application
-    flask run &
-    sleep 4
-    /opt/jmeter/bin/jmeter -n -t test/jmeter/suma-resta.jmx -f -l flask.jtl
-    '''
-    perfReport sourceDataFiles: 'flask.jtl'
-  }
-}
- 
-        stage ('Limpieza')
-        {
-            agent any
+        stage('Performance') {
             steps {
-                
-                //solicitud de informacion del profesor//
                 sh '''
-                whoami
-                hostname
-                echo "WORKSPACE=$WORKSPACE"
+                set -e
+                export FLASK_APP=app.api:api_application
+                flask run &
+                sleep 4
+                /opt/jmeter/bin/jmeter -n -t test/jmeter/suma-resta.jmx -f -l flask.jtl
                 '''
-
-                echo 'Iniciando limpieza de Workspace'
+                perfReport sourceDataFiles: 'flask.jtl'
+            }
+        }
+ 
+        stage('Limpieza') {
+        parallel {
+            stage('Clean principal') {
+            agent { label 'principal' }
+            steps {
+                sh 'whoami; hostname; echo "WORKSPACE=$WORKSPACE"'
                 deleteDir()
-                echo 'Workspace limpio'
-                    }      
-                  
+            }
+            }
+            stage('Clean agent1') {
+            agent { label 'agent1' }
+            steps {
+                sh 'whoami; hostname; echo "WORKSPACE=$WORKSPACE"'
+                deleteDir()
+            }
+            }
+            stage('Clean agent2') {
+            agent { label 'agent2' }
+            steps {
+                sh 'whoami; hostname; echo "WORKSPACE=$WORKSPACE"'
+                deleteDir()
+            }
+            }
+        }
         }
     }
 }
