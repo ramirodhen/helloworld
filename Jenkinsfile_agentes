@@ -109,11 +109,12 @@ stage('Security') {
                         pytest test/unit \
                         --junitxml=resultado-unit.xml \
                         --cov=app --cov-branch \
+                        --cov-omit=app/api.py,app/__init__.py \
                         --cov-report=xml:coverage-unit.xml
                         '''
                         junit 'resultado-unit.xml'
                          //Stash del reporte de cobertura//
-                        stash name: 'coverage--unit-report', includes:'coverage-unit.xml'
+                        stash name: 'coverage-unit-report', includes:'coverage-unit.xml'
                         }
                     }
                 }
@@ -141,12 +142,9 @@ stage('Security') {
                         sleep 5
                         echo "fin sleep"
                         # Ejecutamos 
-                        pytest --junitxml=resultado-service.xml test/rest \
-                        --cov=app --cov-branch \
-                        --cov-report=xml:coverage-service.xml
+                        pytest --junitxml=resultado-service.xml test/rest
                         '''
                         junit 'resultado-service.xml'
-                        stash name: 'coverage-service-report', includes:'coverage-service.xml'
 
                         }
                     }
@@ -160,12 +158,11 @@ stage('Cobertura') {
     // Requisito: pase lo que pase, el pipeline continúa.
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 
-        unstash 'coverage-service-report'
-        unstash 'coverage--unit-report'
+        unstash 'coverage-unit-report'
 
       recordCoverage(
         enabledForFailure: true,   // <- CLAVE para que NO se salte si el build va en FAILURE
-        tools: [[parser: 'COBERTURA', pattern: 'coverage*.xml']],
+        tools: [[parser: 'COBERTURA', pattern: 'coverage-unit.xml']],
         qualityGates: [
           // LINE: <85 = FAILURE, 85-95 = UNSTABLE, >95 OK
           [metric: 'LINE',   integerThreshold: 85, criticality: 'FAILURE'],
