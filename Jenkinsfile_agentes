@@ -16,7 +16,7 @@ pipeline{
                 '''
                // Descargo el codigo de mi repositorio//
                 git url: 'https://github.com/ramirodhen/helloworld.git',
-                branch: 'master'
+                branch: 'feature_fix_coverage'
                 stash name:'codigo', includes:'**'
                 }
         }
